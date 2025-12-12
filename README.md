@@ -111,12 +111,13 @@
 
 | 变量名 | 默认值 | 必填 | 备注 |
 |--------|---------|-|-----|
-| ENABLE_PUBLIC_SUBMISSION | `false` |✅| 允许访客添加书签 |
+| ENABLE_PUBLIC_SUBMISSION | `false` |❌| 允许访客添加书签 |
 | SITE_NAME | `灰色轨迹` |❌| 网站名称以及首页显示名称 |
 | SITE_DESCRIPTION | `一个简单易用的书签导航系统` |❌| 首页副标题 |
 | FOOTER_TEXT | `曾梦想仗剑走天涯` |❌| 首页副标题 |
 | ICON_API | `https://favicon.im/` |❌| 图标API |
 | AI_REQUEST_DELAY | 1500 |❌| AI一键补全描述时的调用间隔 |
+| DISPLAY_CATEGORY | 无 |❌| 首页默认显示分类，如设置 `常用推荐 `，访问首页就默认显示常用推荐的书签 |
 
 > **注意**: 我使用免费的Gemini的api key，模型使用gemini-2.5-flash-lite,限制是15次/1分钟,自己看实际情况进行设置
 
