@@ -780,7 +780,7 @@ tr:nth-child(even) {
   margin-bottom: 20px;
   border-radius: 6px;
   font-size: 0.95rem;
-  display: none;
+  visibility: hidden;
 }
 
 .modal-message.success {

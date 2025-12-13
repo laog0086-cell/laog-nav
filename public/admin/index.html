@@ -105,7 +105,7 @@
         <div class="modal-content">
           <span class="modal-close" id="closeBookmarkModal">×</span>
           <h2>新增书签</h2>
-          <div id="addBookmarkMessage" class="modal-message" style="display:none;"></div>
+          <div id="addBookmarkMessage" class="modal-message" style="visibility:hidden;"></div>
           <form id="addBookmarkForm">
             <div class="form-group">
               <label for="addBookmarkName">名称:</label>
@@ -149,7 +149,7 @@
         <div class="modal-content">
           <span class="modal-close" id="closeEditBookmarkModal">×</span>
           <h2>编辑书签</h2>
-          <div id="editBookmarkMessage" class="modal-message" style="display:none;"></div>
+          <div id="editBookmarkMessage" class="modal-message" style="visibility:hidden;"></div>
           <form id="editBookmarkForm">
             <input type="hidden" name="id" id="editBookmarkId" />
             <div class="form-group">
@@ -357,6 +357,13 @@
                   <span id="categoryCurrentPage" class="font-medium">1</span> / <span id="categoryTotalPages">1</span>
               </span>
               <button id="categoryNextPage" disabled class="px-4 py-2 bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">下一页</button>
+              
+              <select id="categoryPageSizeSelect" class="ml-2 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500 bg-white">
+                  <option value="20" selected>20条/页</option>
+                  <option value="50">50条/页</option>
+                  <option value="100">100条/页</option>
+                  <option value="10000">全部</option>
+              </select>
             </div>
           </div>
         </div>

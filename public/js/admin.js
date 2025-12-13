@@ -75,6 +75,7 @@ if (refreshCategoriesBtn) {
 const searchInput = document.getElementById('searchInput');
 const categoryFilter = document.getElementById('categoryFilter');
 const pageSizeSelect = document.getElementById('pageSizeSelect');
+const categoryPageSizeSelect = document.getElementById('categoryPageSizeSelect');
 
 let currentPage = 1;
 let pageSize = 50; // Default to 50
@@ -124,9 +125,19 @@ let pendingTotalItems = 0;
 let allPendingConfigs = [];
 
 let categoryCurrentPage = 1;
-let categoryPageSize = 10;
+let categoryPageSize = 20;
 let categoryTotalItems = 0;
 let categoriesData = [];
+
+// Initialize Category Page Size
+if (categoryPageSizeSelect) {
+  categoryPageSizeSelect.value = categoryPageSize;
+  categoryPageSizeSelect.addEventListener('change', () => {
+    categoryPageSize = parseInt(categoryPageSizeSelect.value);
+    categoryCurrentPage = 1;
+    fetchCategories(categoryCurrentPage);
+  });
+}
 
 
 // ========== 编辑书签功能 ==========
@@ -227,9 +238,19 @@ function renderConfig(configs) {
     const safeCatalog = escapeHTML(config.catelog || '未分类');
     const cardInitial = (safeName.charAt(0) || '站').toUpperCase();
 
-    card.className = 'site-card group bg-white border border-primary-100/60 rounded-xl shadow-sm overflow-hidden relative';
+    // Added cursor-pointer
+    card.className = 'site-card group bg-white border border-primary-100/60 rounded-xl shadow-sm overflow-hidden relative cursor-pointer';
     card.draggable = true;
     card.dataset.id = config.id;
+    
+    // Add click event listener to open URL
+    card.addEventListener('click', (e) => {
+        // Prevent if clicking on buttons or dragging (though buttons have stopPropagation)
+        // Also check if user is selecting text (optional but good UX)
+        if (normalizedUrl) {
+            window.open(normalizedUrl, '_blank', 'noopener,noreferrer');
+        }
+    });
 
     // Logo render logic
     let logoHtml = '';
@@ -681,12 +702,12 @@ function showModalMessage(modalId, message, type) {
   if (container) {
     container.textContent = message;
     container.className = 'modal-message ' + type;
-    container.style.display = 'block';
+    container.style.visibility = 'visible';
 
     // Auto hide success/info messages after 3 seconds
     if (type === 'success' || type === 'info') {
       setTimeout(() => {
-        container.style.display = 'none';
+        container.style.visibility = 'hidden';
       }, 3000);
     }
   } else {
