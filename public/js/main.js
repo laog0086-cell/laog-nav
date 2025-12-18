@@ -424,9 +424,11 @@ document.addEventListener('DOMContentLoaded', function() {
       const sitesGrid = document.getElementById('sitesGrid');
       if (!sitesGrid) return;
       
-      const isFrosted = document.body.innerHTML.includes('frosted-glass-effect'); 
-      const previousContent = sitesGrid.innerHTML;
-      const hadFrosted = previousContent.includes('frosted-glass-effect');
+      // 改用 CSS 变量检测毛玻璃效果是否开启
+      // 因为后端只在 layoutEnableFrostedGlass 为 true 时注入 --frosted-glass-blur 变量
+      const computedStyle = getComputedStyle(document.documentElement);
+      const frostedBlurVal = computedStyle.getPropertyValue('--frosted-glass-blur').trim();
+      const isFrostedEnabled = frostedBlurVal !== '';
       
       const isFiveCols = sitesGrid.className.includes('xl:grid-cols-5');
       
@@ -476,8 +478,8 @@ document.addEventListener('DOMContentLoaded', function() {
                   ${safeCatalog}
                 </span>`;
         
-        const frostedClass = hadFrosted ? 'frosted-glass-effect' : '';
-        const baseCardClass = hadFrosted
+        const frostedClass = isFrostedEnabled ? 'frosted-glass-effect' : '';
+        const baseCardClass = isFrostedEnabled
             ? 'site-card group rounded-xl overflow-hidden transition-all' 
             : 'site-card group bg-white border border-primary-100/60 rounded-xl shadow-sm overflow-hidden';
         

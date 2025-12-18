@@ -555,9 +555,9 @@ export async function onRequest(context) {
     .replace('{{MAIN_CLASS}}', mainClass)
     .replace('{{SIDEBAR_TOGGLE_CLASS}}', sidebarToggleClass);
 
-  // 关键：在 Custom Wallpaper 模式下，移除 index.html 中硬编码的 Sidebar 背景样式
+  // 关键：在 Custom Wallpaper 模式下，为 Sidebar 添加毛玻璃效果
   if (isCustomWallpaper) {
-      html = html.replace('bg-white shadow-md border-r border-primary-100/60', 'shadow-lg border-r border-white/10');
+      html = html.replace('bg-white shadow-md border-r border-primary-100/60', 'bg-white/40 backdrop-blur-[10px] shadow-lg border-r border-white/10');
   }
 
   const response = new Response(html, {
