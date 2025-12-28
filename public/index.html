@@ -9,59 +9,55 @@
   <link rel="stylesheet" href="/css/style.css?v=11">
   <style>
     /* ============================================================
-       极致紧凑改造：强制所有书签卡片变为小图标样式
+       极致紧凑改造：在保留原有透明风格的基础上缩小图标和排版
        ============================================================ */
     
-    /* 1. 调整网格：强制大屏幕显示 7 列，间距缩小 */
+    /* 1. 强制大屏幕显示 7 列，并缩小格子间距 */
     #sitesGrid {
-        grid-template-columns: repeat(2, 1fr) !important; /* 手机端2列 */
-        gap: 10px !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px !important; /* 缩小格子之间的距离 */
     }
     @media (min-width: 640px) { #sitesGrid { grid-template-columns: repeat(4, 1fr) !important; } }
     @media (min-width: 1024px) { #sitesGrid { grid-template-columns: repeat(7, 1fr) !important; } }
 
-    /* 2. 调整卡片容器：缩小高度和内边距，内容居中 */
+    /* 2. 缩小卡片内边距，取消最小高度限制 */
     #sitesGrid > a {
-        padding: 12px 6px !important;
+        padding: 10px 6px !important;
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
-        justify-content: center !important;
-        min-height: 80px !important;
-        transition: all 0.2s ease-in-out !important;
+        text-align: center !important;
+        min-height: auto !important; /* 取消原本的高大感 */
+        border-radius: 12px !important;
     }
 
-    /* 3. 调整图标：强制缩小为 32x32，并取消右边距改为底边距 */
+    /* 3. 精准控制图标：32px 极致小图标 */
     #sitesGrid img {
         width: 32px !important;
         height: 32px !important;
-        margin-right: 0 !important;
-        margin-bottom: 8px !important;
+        margin-right: 0 !important; /* 取消风格一的左侧布局 */
+        margin-bottom: 6px !important; /* 图标和文字的间距 */
         border-radius: 6px !important;
     }
 
-    /* 4. 调整标题：字体缩小并强制单行隐藏 */
+    /* 4. 标题文字微调：更小、单行显示 */
     #sitesGrid h3 {
         font-size: 13px !important;
-        font-weight: 500 !important;
-        text-align: center !important;
+        line-height: 1.2 !important;
+        font-weight: 400 !important;
+        width: 100% !important;
         white-space: nowrap !important;
         overflow: hidden !important;
         text-overflow: ellipsis !important;
-        width: 100% !important;
     }
 
-    /* 5. 隐藏不需要的元素：描述文字、分类标签、复制按钮等 */
+    /* 5. 隐藏所有干扰元素：描述、分类标签、复制按钮、网址链接 */
     #sitesGrid p, 
     #sitesGrid .site-tag,
     #sitesGrid .copy-btn,
+    #sitesGrid .text-xs,
     #sitesGrid span[class*="bg-"] {
         display: none !important;
-    }
-    
-    /* 悬浮微调：稍微放大一点 */
-    #sitesGrid > a:hover {
-        transform: translateY(-2px);
     }
   </style>
   <script>
@@ -123,7 +119,7 @@
     </div>
     
     <section class="max-w-7xl mx-auto px-4 sm:px-6 pb-12">
-      <div class="p-4 sm:p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+      <div class="p-4 sm:p-6">
         <div id="sitesGrid" class="grid">
           {{SITES_GRID}}
         </div>
