@@ -252,25 +252,38 @@
         });
       }
 
-      // 2. 图标强行转换逻辑
+      // 2. 强力图标转换逻辑 (增加对旧数据 src 的强制覆盖)
+      const targetApi = "https://www.faviconextractor.com/favicon/";
       const fixIcons = () => {
         const images = document.querySelectorAll('#sitesGrid img');
         images.forEach(img => {
           const card = img.closest('a');
-          if (card && card.href && !img.dataset.fixed) {
+          if (card && card.href) {
             try {
               const domain = new URL(card.href).hostname;
-              img.src = `https://www.faviconextractor.com/favicon/${domain}?larger=true`;
-              img.dataset.fixed = "true";
+              const newSrc = `${targetApi}${domain}?larger=true`;
+              
+              // 关键点：如果当前 src 和我们预期的不符，直接暴力替换
+              if (!img.src.includes(domain) || img.src.includes('error')) {
+                 img.src = newSrc;
+              }
+
+              // 兜底：如果加载失败，再次重定向到新接口
+              img.onerror = function() {
+                if(this.src !== newSrc) this.src = newSrc;
+              };
             } catch (e) {}
           }
         });
       };
 
+      // 监听列表变化并定时巡检
       const observer = new MutationObserver(fixIcons);
       const grid = document.getElementById('sitesGrid');
       if (grid) observer.observe(grid, { childList: true, subtree: true });
-      setInterval(fixIcons, 1000); // 兜底处理
+      
+      fixIcons(); // 立即执行
+      setInterval(fixIcons, 1500); // 1.5秒巡检一次，防止由于异步导致的失效
     });
   </script>
 </body>
