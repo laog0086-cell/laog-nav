@@ -41,19 +41,19 @@
       }
     }
   </script>
+  <style>
+    .search-engine-tab.active { background: rgba(255,255,255,0.2); color: #fff; border-radius: 6px; }
+  </style>
 </head>
 <body class="bg-secondary-50 font-sans text-gray-800">
   <input type="checkbox" id="sidebar-toggle" class="hidden">
   
-  <!-- 左上角操作区 (移动端导航按钮 或 GitHub 图标) -->
   {{LEFT_TOP_ACTION}}
 
-  <!-- 右上角操作区 (主题切换, 后台入口) -->
   {{RIGHT_TOP_ACTION}}
   
   <div id="mobileOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 mobile-overlay lg:hidden"></div>
   
-  <!-- 桌面侧边栏开关按钮 -->
   <div class="fixed top-4 left-4 z-50 hidden lg:block {{SIDEBAR_TOGGLE_CLASS}}">
     <label for="sidebar-toggle" class="p-2 rounded-lg bg-white shadow-md hover:bg-gray-100 inline-block cursor-pointer">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -62,7 +62,6 @@
     </label>
   </div>
   
-  <!-- 侧边栏 -->
   <aside id="sidebar" class="sidebar fixed left-0 top-0 h-full w-64 bg-white dark:bg-gray-900 shadow-md border-r border-primary-100/60 dark:border-gray-800 z-50 overflow-y-auto mobile-sidebar lg:transform-none transition-all duration-300 {{SIDEBAR_CLASS}}">
     <div class="p-6">
       <div class="flex items-center justify-between mb-8">
@@ -104,7 +103,6 @@
           </button>
         </div>
         
-        
         <a href="/admin" target="_blank" class="mt-2 flex items-center px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-primary-500 dark:hover:text-primary-400 transition duration-300">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -115,10 +113,15 @@
     </div>
   </aside>
   
-  <!-- 主内容区 -->
   <main class="main-content {{MAIN_CLASS}} min-h-screen transition-all duration-300">
     <header class="{{HEADER_CLASS}} text-white py-10 px-6 md:px-10 shadow-sm">
       {{HEADER_CONTENT}}
+      <div class="max-w-3xl mx-auto mt-4 flex justify-center gap-6 text-sm">
+        <span class="search-engine-tab active cursor-pointer px-3 py-1" data-engine="local">站内搜索</span>
+        <span class="search-engine-tab cursor-pointer px-3 py-1" data-engine="google">Google</span>
+        <span class="search-engine-tab cursor-pointer px-3 py-1" data-engine="baidu">百度</span>
+        <span class="search-engine-tab cursor-pointer px-3 py-1" data-engine="github">GitHub</span>
+      </div>
     </header>
     
     <div class="max-w-7xl mx-auto px-4 sm:px-6 {{STATS_ROW_PY_CLASS}}">
@@ -160,7 +163,6 @@
     </svg>
   </button>
   
-  <!-- 添加网站模态框 -->
   <div id="addSiteModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 opacity-0 invisible transition-all duration-300">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 transform translate-y-8 transition-all duration-300">
       <div class="p-6">
@@ -186,7 +188,7 @@
           
           <div>
             <label for="addSiteLogo" class="block text-sm font-medium text-gray-700">Logo (可选)</label>
-            <input type="text" id="addSiteLogo" class="mt-1 block w-full px-3 py-2 border border-primary-100 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-400">
+            <input type="text" id="addSiteLogo" placeholder="留空自动使用新接口生成" class="mt-1 block w-full px-3 py-2 border border-primary-100 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-400">
           </div>
           
           <div>
@@ -215,5 +217,61 @@
   </div>
   
   <script src="/js/main.js?v=13"></script>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // 1. 搜索引擎逻辑
+      let currentEngine = 'local';
+      const engineMap = {
+        google: 'https://www.google.com/search?q=',
+        baidu: 'https://www.baidu.com/s?wd=',
+        github: 'https://github.com/search?q='
+      };
+
+      const tabs = document.querySelectorAll('.search-engine-tab');
+      const searchInput = document.querySelector('header input[type="text"]');
+
+      tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+          tabs.forEach(t => t.classList.remove('active'));
+          this.classList.add('active');
+          currentEngine = this.dataset.engine;
+          if(searchInput) searchInput.placeholder = currentEngine === 'local' ? '搜索书签...' : '使用 ' + this.innerText + ' 搜索...';
+        });
+      });
+
+      if(searchInput) {
+        searchInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && currentEngine !== 'local') {
+            const query = searchInput.value.trim();
+            if (query) {
+              e.preventDefault();
+              window.open(engineMap[currentEngine] + encodeURIComponent(query), '_blank');
+            }
+          }
+        });
+      }
+
+      // 2. 图标强行转换逻辑
+      const fixIcons = () => {
+        const images = document.querySelectorAll('#sitesGrid img');
+        images.forEach(img => {
+          const card = img.closest('a');
+          if (card && card.href && !img.dataset.fixed) {
+            try {
+              const domain = new URL(card.href).hostname;
+              img.src = `https://www.faviconextractor.com/favicon/${domain}?larger=true`;
+              img.dataset.fixed = "true";
+            } catch (e) {}
+          }
+        });
+      };
+
+      const observer = new MutationObserver(fixIcons);
+      const grid = document.getElementById('sitesGrid');
+      if (grid) observer.observe(grid, { childList: true, subtree: true });
+      setInterval(fixIcons, 1000); // 兜底处理
+    });
+  </script>
 </body>
 </html>
