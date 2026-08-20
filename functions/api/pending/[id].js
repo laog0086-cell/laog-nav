@@ -1,5 +1,7 @@
 // functions/api/pending/[id].js
-import { isAdminAuthenticated, errorResponse, jsonResponse } from '../../_middleware';
+import { isAdminAuthenticated, errorResponse, jsonResponse, markHomeCacheDirty, normalizeSortOrder } from '../../_middleware';
+import { buildFaviconUrl, getUrlMatchCandidates, normalizeUrlForStorage } from '../../lib/utils';
+import { normalizeBookmarkDesc, normalizeBookmarkLogo, normalizeBookmarkName, normalizeBookmarkUrl } from '../../lib/validators';
 
 export async function onRequestPut(context) {
   const { request, env, params } = context;
@@ -17,25 +19,77 @@ export async function onRequestPut(context) {
     }
 
     const config = results[0];
-    let { logo, url } = config;
-    let sanitizedLogo = logo;
-    const iconAPI=env.ICON_API ||'https://favicon.im/';
-    if(!logo && url){
-      if(url.startsWith('https://') || url.startsWith('http://')){
-        const domain = url.replace(/^https?:\/\//, '').split('/')[0];
-        sanitizedLogo = iconAPI+domain;
-        if(!env.ICON_API){
-          sanitizedLogo+='?larger=true'
-        }
+    let updateData = {};
+    const contentType = request.headers.get('Content-Type') || '';
+    if (contentType.includes('application/json')) {
+      try {
+        updateData = await request.json();
+      } catch {
+        updateData = {};
       }
-      
     }
+    if (!updateData || typeof updateData !== 'object' || Array.isArray(updateData)) {
+      updateData = {};
+    }
+
+    const hasField = (field) => Object.prototype.hasOwnProperty.call(updateData, field);
+    const getField = (field, fallback) => hasField(field) ? updateData[field] : fallback;
+    const catelogId = hasField('catelog_id')
+      ? updateData.catelog_id
+      : getField('catelogId', config.catelog_id);
+
+    const nameResult = normalizeBookmarkName(getField('name', config.name));
+    if (!nameResult.ok) return errorResponse(nameResult.message, 400);
+
+    const urlResult = normalizeBookmarkUrl(getField('url', config.url));
+    if (!urlResult.ok) return errorResponse(urlResult.message, 400);
+
+    const logoResult = normalizeBookmarkLogo(getField('logo', config.logo), { nullIfEmpty: true });
+    if (!logoResult.ok) return errorResponse(logoResult.message, 400);
+
+    const descResult = normalizeBookmarkDesc(getField('desc', config.desc), { nullIfEmpty: true });
+    if (!descResult.ok) return errorResponse(descResult.message, 400);
+
+    const sanitizedName = nameResult.value;
+    const rawUrl = urlResult.value;
+    const sanitizedUrl = normalizeUrlForStorage(rawUrl);
+    let sanitizedLogo = logoResult.value;
+    const sanitizedDesc = descResult.value;
+    const sortOrderValue = hasField('sort_order') ? normalizeSortOrder(updateData.sort_order) : 9999;
+    const isPrivateValue = getField('is_private', false) ? 1 : 0;
+
+    if (!catelogId) {
+      return errorResponse('Catelog is required', 400);
+    }
+    if (!sanitizedUrl) {
+      return errorResponse('URL must be a valid http or https URL', 400);
+    }
+
+    const urlCandidates = getUrlMatchCandidates(rawUrl);
+    const placeholders = urlCandidates.map(() => '?').join(',');
+    const duplicate = await env.NAV_DB.prepare(`SELECT id FROM sites WHERE url IN (${placeholders})`)
+      .bind(...urlCandidates)
+      .first();
+    if (duplicate) {
+      return errorResponse('该 URL 已存在，请勿重复添加', 409);
+    }
+
+    const iconAPI = env.ICON_API || 'https://faviconsnap.com/api/favicon?url=';
+    sanitizedLogo = buildFaviconUrl(sanitizedUrl, sanitizedLogo, iconAPI);
+    const category = await env.NAV_DB.prepare('SELECT catelog, is_private FROM category WHERE id = ?').bind(catelogId).first();
+    if (!category) {
+      return errorResponse('Category not found.', 400);
+    }
+    const finalIsPrivate = category.is_private === 1 ? 1 : isPrivateValue;
+
     await env.NAV_DB.prepare(`
-      INSERT INTO sites (name, url, logo, desc, catelog_id, sort_order)
-      VALUES (?, ?, ?, ?, ?, 9999)
-    `).bind(config.name, config.url, sanitizedLogo, config.desc, config.catelog_id).run();
+      INSERT INTO sites (name, url, logo, desc, catelog_id, catelog_name, sort_order, is_private)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(sanitizedName, sanitizedUrl, sanitizedLogo, sanitizedDesc, catelogId, category.catelog, sortOrderValue, finalIsPrivate).run();
     
     await env.NAV_DB.prepare('DELETE FROM pending_sites WHERE id = ?').bind(id).run();
+
+    await markHomeCacheDirty(env, finalIsPrivate ? 'private' : 'all');
 
     return jsonResponse({
       code: 200,

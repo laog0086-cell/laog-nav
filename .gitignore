@@ -6,8 +6,22 @@ node_modules/
 .wrangler/
 wrangler.toml
 
+# Husky internal files
+.husky/_
+
 # Editor
 .vscode/
 .idea/
+.trae/
+.gemini/
+.cursor/
+.codex/
+.claude/
+.kiro/
+.github/
+.agent/
+.roo/
+.shared/
+.windsurf/
 *.swp
 *.swo

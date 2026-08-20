@@ -1,42 +1,12 @@
 // functions/admin/index.js
 
-async function validateAdminSession(request, env) {
-  const cookie = request.headers.get('Cookie');
-  if (!cookie) {
-    console.log('No cookie found');
-    return { authenticated: false };
-  }
-  
-  const match = cookie.match(/admin_session=([^;]+)/);
-  if (!match) {
-    console.log('No session cookie found');
-    return { authenticated: false };
-  }
-  
-  const token = match[1];
-  console.log('Validating token:', token.substring(0, 8) + '...');
-  
-  const session = await env.NAV_AUTH.get(`session_${token}`);
-  
-  if (session) {
-    console.log('Session valid');
-    return { authenticated: true, token };
-  } else {
-    console.log('Session invalid or expired');
-    return { authenticated: false };
-  }
-}
+import { buildSessionCookie, isAdminAuthenticated, getSessionToken } from '../_middleware';
 
 // GET: 显示管理页面或重定向到登录
 export async function onRequestGet(context) {
   const { request, env } = context;
-  
-  console.log('GET /admin');
-  
-  const session = await validateAdminSession(request, env);
-  
-  if (!session.authenticated) {
-    console.log('User not authenticated, redirecting to login');
+
+  if (!(await isAdminAuthenticated(request, env))) {
     return new Response(null, {
       status: 302,
       headers: {
@@ -44,22 +14,35 @@ export async function onRequestGet(context) {
       },
     });
   }
-  
-  console.log('User authenticated, serving admin page from public/admin/index.html');
-  
+
+  const sessionToken = getSessionToken(request);
+
   // 尝试从静态资源读取 HTML 文件
   try {
-    // Pages Functions 会自动将 public 目录作为静态资源
-    // 访问 /admin 时会自动查找 public/admin/index.html
-    // 这里我们直接返回一个内部重定向或者读取文件
     const url = new URL(request.url);
     url.pathname = '/admin/index.html';
-    
-    // 使用 env.ASSETS 获取静态文件
+
     const response = await env.ASSETS.fetch(url);
-    
+
     if (response.ok) {
-      return response;
+      // 从 KV 读取 CSRF token 并注入到 HTML
+      const csrfToken = await env.NAV_AUTH.get(`csrf_${sessionToken}`);
+      if (csrfToken) {
+        let html = await response.text();
+        html = html.replace('</head>', `<meta name="csrf-token" content="${csrfToken}">\n</head>`);
+        const headers = new Headers(response.headers);
+        headers.set('Cache-Control', 'no-store');
+        return new Response(html, { headers });
+      }
+
+      return new Response(null, {
+        status: 302,
+        headers: {
+          'Location': `/admin/login?error=${encodeURIComponent('登录状态已过期，请重新登录')}`,
+          'Set-Cookie': buildSessionCookie('', { maxAge: 0 }),
+          'Cache-Control': 'no-store',
+        },
+      });
     } else {
       console.error('Failed to load admin HTML:', response.status);
       return new Response('管理页面加载失败', { status: 500 });

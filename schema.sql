@@ -15,6 +15,9 @@ CREATE TABLE IF NOT EXISTS sites (
 
 CREATE INDEX IF NOT EXISTS idx_sites_catelog_id ON sites(catelog_id);
 CREATE INDEX IF NOT EXISTS idx_sites_sort_order ON sites(sort_order);
+CREATE INDEX IF NOT EXISTS idx_sites_private_sort ON sites(is_private, sort_order);
+CREATE INDEX IF NOT EXISTS idx_sites_catelog_name ON sites(catelog_name);
+CREATE INDEX IF NOT EXISTS idx_sites_url ON sites(url);
 
 -- 待审核网站表
 CREATE TABLE IF NOT EXISTS pending_sites (
@@ -37,4 +40,10 @@ CREATE TABLE IF NOT EXISTS category (
   is_private INTEGER DEFAULT 0,
   create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 设置表
+CREATE TABLE IF NOT EXISTS settings (
+  key TEXT PRIMARY KEY,
+  value TEXT
 );
